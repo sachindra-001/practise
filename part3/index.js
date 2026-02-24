@@ -1,10 +1,13 @@
 require("dotenv").config();
 const express = require("express");
+const cors = require("cors");
 const Note = require("./models/note");
 
 const app = express();
 
-let notes = [];
+app.use(cors());
+app.use(express.static("dist"));
+app.use(express.json());
 
 const requestLogger = (request, response, next) => {
   console.log("Method:", request.method);
@@ -15,23 +18,20 @@ const requestLogger = (request, response, next) => {
 };
 
 app.use(requestLogger);
-app.use(express.static("dist"));
-app.use(express.json());
-
-app.get("/", (request, response) => {
-  response.send("<h1>Hello World!</h1>");
-});
 
 app.get("/api/notes", (request, response) => {
+  // This correctly fetches from MongoDB
   Note.find({}).then((notes) => {
     response.json(notes);
   });
 });
 
-app.get("/api/notes/:id", (request, response) => {
-  Note.findById(request.params.id).then((note) => {
-    response.json(note);
-  });
+app.delete("/api/notes/:id", (request, response, next) => {
+  Note.findByIdAndDelete(request.params.id)
+    .then((result) => {
+      response.status(204).end();
+    })
+    .catch((error) => next(error));
 });
 
 app.post("/api/notes", (request, response) => {
@@ -50,12 +50,23 @@ app.post("/api/notes", (request, response) => {
     response.json(savedNote);
   });
 });
+app.put("/api/notes/:id", (request, response, next) => {
+  const { content, important } = request.body;
 
-app.delete("/api/notes/:id", (request, response) => {
-  const id = request.params.id;
-  notes = notes.filter((note) => note.id !== id);
+  Note.findById(request.params.id)
+    .then((note) => {
+      if (!note) {
+        return response.status(404).end();
+      }
 
-  response.status(204).end();
+      note.content = content;
+      note.important = important;
+
+      return note.save().then((updatedNote) => {
+        response.json(updatedNote);
+      });
+    })
+    .catch((error) => next(error));
 });
 
 const unknownEndpoint = (request, response) => {
@@ -64,7 +75,19 @@ const unknownEndpoint = (request, response) => {
 
 app.use(unknownEndpoint);
 
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message);
+
+  if (error.name === "CastError") {
+    return response.status(400).send({ error: "malformatted id" });
+  }
+
+  next(error);
+};
+
+// this has to be the last loaded middleware, also all the routes should be registered before this!
+app.use(errorHandler);
