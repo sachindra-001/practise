@@ -7,7 +7,9 @@
     "start": "node index.js",
     "dev": "nodemon index.js",
     "build:ui": "npx shx rm -rf dist && cd ../PART2/vite-project && npm install && npm run build && npx shx cp -r dist ../../part3",
-    "deploy:full": "npm run build:ui && git add . && git commit -m uibuild && git push"
+    "deploy:full": "npm run build:ui && git add . && git commit -m uibuild && git push",
+    "lint": "eslint .",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "\"Matti Luukkainen\",",
   "license": "MIT",
@@ -20,6 +22,12 @@
     "nodemon": "^3.1.13"
   },
   "devDependencies": {
-    "shx": "^0.4.0"
+    "@eslint/js": "^9.39.3",
+    "@stylistic/eslint-plugin": "^5.9.0",
+    "eslint": "^9.39.3",
+    "eslint-plugin-react": "^7.37.5",
+    "globals": "^17.3.0",
+    "shx": "^0.4.0",
+    "typescript-eslint": "^8.56.1"
   }
 }
