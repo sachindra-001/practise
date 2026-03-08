@@ -5,7 +5,7 @@ const logger = require('./utils/logger')
 const middleware = require('./utils/middleware')
 const notesRouter = require('./controller/note')
 
-const app = express()
+const app = express() // USE express() HERE, NOT require('./app')
 
 logger.info('connecting to', config.MONGODB_URI)
 
@@ -27,4 +27,4 @@ app.use('/api/notes', notesRouter)
 app.use(middleware.unknownEndpoint)
 app.use(middleware.errorHandler)
 
-module.exports = app
+module.exports = app // Export the app so index.js and tests can use it
